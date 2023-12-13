@@ -31,11 +31,29 @@ async function run() {
     const allServicesCollection = client
       .db("eduEventDB")
       .collection("all-services");
+    const usersCollections = client.db("eduEventDB").collection("user");
 
     //   get all services
     app.get("/services", async (req, res) => {
-      const result = await allServicesCollection.find().toArray();
-      res.send(result);
+      const category = req.query.category;
+      console.log(category);
+
+      const page = Number(req.query.page);
+      const limit = Number(req.query.limit);
+      const skip = (page - 1) * limit;
+
+      let query = {};
+      if (category) {
+        query.category = category;
+      }
+
+      const result = await allServicesCollection
+        .find(query)
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+      const totalServices = await allServicesCollection.countDocuments(query);
+      res.send({ result, totalServices });
     });
     app.get("/services/:id", async (req, res) => {
       const id = req.params.id;
